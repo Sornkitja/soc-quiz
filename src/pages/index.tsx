@@ -1,7 +1,18 @@
+// src/pages/index.tsx
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/router';
+
 export default function Home() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/register');
+  }, [router]);
+
   return (
-    <div className="bg-yellow-200 text-center p-8">
-      <h1 className="text-4xl font-bold text-purple-700">Hello Tailwind!</h1>
+    <div className="min-h-screen flex items-center justify-center">
+      <p className="text-lg">Redirecting...</p>
     </div>
   );
 }
