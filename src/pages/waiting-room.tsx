@@ -11,29 +11,31 @@ interface PlayerScore {
 
 export default function WaitingRoom() {
   const router = useRouter();
-  const room = localStorage.getItem('roomCode') || 'SOC-QUIZ';
+  const [room, setRoom] = useState('SOC-QUIZ'); // ✅ ใช้ useState แทน
   const [leaderboard, setLeaderboard] = useState<PlayerScore[]>([]);
   const [gameStatus, setGameStatus] = useState('');
 
-  // ✅ Listen gameStatus & redirect
+  // ✅ โหลดค่า room จาก localStorage เฉพาะฝั่ง client
   useEffect(() => {
+    const r = localStorage.getItem('roomCode') || 'SOC-QUIZ';
+    setRoom(r);
+  }, []);
+
+  useEffect(() => {
+    if (!room) return;
+
     const statusRef = ref(db, `gameStatus/${room}`);
-    const unsub = onValue(statusRef, (snapshot) => {
+    const unsubStatus = onValue(statusRef, (snapshot) => {
       const status = snapshot.val() || '';
       setGameStatus(status);
 
       if (status === 'playing') {
         router.push('/play');
       }
-      // ended → stay here for Final LB
     });
-    return () => unsub();
-  }, [room]);
 
-  // ✅ Listen leaderboard
-  useEffect(() => {
     const lbRef = ref(db, `players/${room}`);
-    const unsub = onValue(lbRef, (snapshot) => {
+    const unsubLB = onValue(lbRef, (snapshot) => {
       const data = snapshot.val() || {};
       const list: PlayerScore[] = Object.values(data);
       list.sort((a, b) =>
@@ -41,8 +43,12 @@ export default function WaitingRoom() {
       );
       setLeaderboard(list.slice(0, 10));
     });
-    return () => unsub();
-  }, [room]);
+
+    return () => {
+      unsubStatus();
+      unsubLB();
+    };
+  }, [room, router]);
 
   return (
     <div
