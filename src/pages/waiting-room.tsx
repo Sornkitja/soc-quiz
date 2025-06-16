@@ -53,7 +53,7 @@ export default function WaitingRoom() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center bg-cover bg-center p-6"
-      style={{ backgroundImage: "url('/bg-waiting.jpg')" }}
+      style={{ backgroundImage: "url('/bg-waiting.png')" }}
     >
       <div className="bg-white px-6 py-3 rounded shadow mb-4">
         <h1 className="text-2xl font-bold">🌟 คุณอยู่ในห้องรอแล้ว 🌟</h1>

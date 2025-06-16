@@ -74,7 +74,7 @@ export default function PlayPage() {
   return (
     <div
       className="min-h-screen bg-cover bg-center flex items-center justify-center p-6"
-      style={{ backgroundImage: "url('/bg-play.jpg')" }}
+      style={{ backgroundImage: "url('/bg-play.png')" }}
     >
       <div className="bg-white bg-opacity-90 rounded-lg p-6 w-full max-w-xl text-center shadow-lg">
         <h2 className="text-xl font-bold mb-2">⏱️ เวลาที่เหลือ: {timeLeft} วินาที</h2>

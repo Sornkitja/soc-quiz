@@ -31,11 +31,18 @@ export default function StartGame() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-100 to-orange-300 flex flex-col items-center justify-center p-6">
-      <h1 className="text-2xl font-bold mb-4">🎯 เตรียมเริ่มเกม</h1>
-      <p className="mb-4">Room Code: <span className="font-mono">{roomCode}</span></p>
+    <div
+      className="min-h-screen flex flex-col items-center justify-center p-6 bg-cover bg-center"
+      style={{ backgroundImage: "url('/bg-firstpage.png')" }}
+    >
+      <h1 className="text-2xl font-bold mb-4 bg-white bg-opacity-80 px-4 py-2 rounded">
+        🎯 เตรียมเริ่มเกม
+      </h1>
+      <p className="mb-4 bg-white bg-opacity-80 px-4 py-2 rounded">
+        Room Code: <span className="font-mono">{roomCode}</span>
+      </p>
 
-      <div className="bg-white p-4 rounded-md shadow-md w-full max-w-md mb-4">
+      <div className="bg-white p-4 rounded-md shadow-md w-full max-w-md mb-4 bg-opacity-90">
         <h2 className="font-semibold mb-2">รายการคำถาม ({questions.length} ข้อ)</h2>
         <ul className="text-sm list-disc pl-5 space-y-1 max-h-40 overflow-y-auto">
           {questions.map((q, i) => (
@@ -49,7 +56,7 @@ export default function StartGame() {
         onClick={startGame}
         disabled={questions.length === 0}
       >
-        ▶️ เริ่มเกม
+       ▶️ เริ่มเกม
       </button>
     </div>
   );
