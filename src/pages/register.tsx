@@ -34,7 +34,7 @@ export default function Register() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center bg-cover bg-center p-4"
-      style={{ backgroundImage: "url('/bg-register.jpg')" }}
+      style={{ backgroundImage: "url('/bg-firstpage.jpg')" }}
     >
       <div className="bg-white bg-opacity-80 rounded-lg p-6 max-w-md w-full text-center shadow-lg">
         <h1 className="text-2xl font-bold mb-4">🎓 เข้าร่วม SOC GAME</h1>
