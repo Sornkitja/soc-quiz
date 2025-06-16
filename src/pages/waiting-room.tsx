@@ -3,80 +3,81 @@ import { useRouter } from 'next/router';
 import { db } from '../firebase';
 import { ref, onValue } from 'firebase/database';
 
-interface PlayerScore {
+interface Player {
   name: string;
-  score: number;
+  correctCount: number;
   totalTime: number;
 }
 
 export default function WaitingRoom() {
   const router = useRouter();
-  const [room, setRoom] = useState('SOC-QUIZ'); // ✅ ใช้ useState แทน
-  const [leaderboard, setLeaderboard] = useState<PlayerScore[]>([]);
-  const [gameStatus, setGameStatus] = useState('');
+  const room = 'SOC-QUIZ';
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [gameStatus, setGameStatus] = useState('waiting');
 
-  // ✅ โหลดค่า room จาก localStorage เฉพาะฝั่ง client
+  // ✅ Listen players & status
   useEffect(() => {
-    const r = localStorage.getItem('roomCode') || 'SOC-QUIZ';
-    setRoom(r);
-  }, []);
-
-  useEffect(() => {
-    if (!room) return;
+    const playersRef = ref(db, `players/${room}`);
+    const unsubPlayers = onValue(playersRef, (snap) => {
+      const val = snap.val() || {};
+      const arr = Object.values(val) as any[];
+      const sorted = arr
+        .map(p => ({
+          name: p.name || '',
+          correctCount: p.correctCount || 0,
+          totalTime: p.totalTime || 0
+        }))
+        .sort((a, b) => b.correctCount - a.correctCount || a.totalTime - b.totalTime);
+      setPlayers(sorted);
+    });
 
     const statusRef = ref(db, `gameStatus/${room}`);
-    const unsubStatus = onValue(statusRef, (snapshot) => {
-      const status = snapshot.val() || '';
-      setGameStatus(status);
-
-      if (status === 'playing') {
+    const unsubStatus = onValue(statusRef, (snap) => {
+      const val = snap.val();
+      setGameStatus(val || 'waiting');
+      // ถ้าเล่นอยู่ → ไปหน้า play
+      if (val === 'playing') {
         router.push('/play');
       }
     });
 
-    const lbRef = ref(db, `players/${room}`);
-    const unsubLB = onValue(lbRef, (snapshot) => {
-      const data = snapshot.val() || {};
-      const list: PlayerScore[] = Object.values(data);
-      list.sort((a, b) =>
-        b.score === a.score ? a.totalTime - b.totalTime : b.score - a.score
-      );
-      setLeaderboard(list.slice(0, 10));
-    });
-
     return () => {
+      unsubPlayers();
       unsubStatus();
-      unsubLB();
     };
-  }, [room, router]);
+  }, []);
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center bg-cover bg-center p-6"
+      className="min-h-screen flex flex-col items-center justify-center p-6 bg-cover bg-center"
       style={{ backgroundImage: "url('/bg-waiting.png')" }}
     >
-      <div className="bg-white px-6 py-3 rounded shadow mb-4">
-        <h1 className="text-2xl font-bold">🌟 คุณอยู่ในห้องรอแล้ว 🌟</h1>
-      </div>
+      <div className="bg-white p-6 rounded shadow-md max-w-md w-full text-center">
+        <h1 className="text-xl font-bold mb-4">⏳ คุณอยู่ในห้องรอแล้ว</h1>
 
-      <div className="bg-white p-4 rounded shadow-md w-full max-w-md mb-6">
-        <h2 className="text-lg font-semibold mb-2">
-          {gameStatus === 'ended' ? '🏆 Final Leaderboard' : '🏆 Leaderboard'}
-        </h2>
-        <ul className="text-sm">
-          {leaderboard.map((p, idx) => (
-            <li key={idx}>
-              {idx + 1}. {p.name} — {p.score} ถูก, {p.totalTime}s
+        <h2 className="text-lg font-semibold mb-2">🏆 Leaderboard</h2>
+        <ul className="text-sm mb-4">
+          {players.map((p, i) => (
+            <li key={i}>
+              {p.name} - {p.correctCount} ถูกต้อง, {p.totalTime}s
             </li>
           ))}
         </ul>
-      </div>
 
-      {gameStatus === 'ended' ? (
-        <p className="text-xl font-bold text-green-700">🎉 ขอบคุณที่ร่วมเล่น SOC QUIZ!</p>
-      ) : (
-        <p className="text-gray-800 font-medium">⏳ รอผู้ดูแลเริ่มเกม หรือข้อถัดไป...</p>
-      )}
+        <p className="mb-4 text-gray-600">
+          {gameStatus === 'waiting' && 'รอผู้ดูแลเริ่มเกม หรือข้อถัดไป...'}
+          {gameStatus === 'ended' && 'เกมสิ้นสุดแล้ว!'}
+        </p>
+
+        {gameStatus === 'ended' && (
+          <button
+            onClick={() => router.push('/leaderboard')}
+            className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded font-bold"
+          >
+            🏅 ดู Leaderboard
+          </button>
+        )}
+      </div>
     </div>
   );
 }
