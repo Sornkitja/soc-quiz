@@ -1,3 +1,5 @@
+// src/pages/leaderboard.tsx
+
 import { useEffect, useState } from 'react';
 import { db } from '../firebase';
 import { ref, onValue } from 'firebase/database';
@@ -26,7 +28,6 @@ export default function Leaderboard() {
       const raw = snap.val();
       if (raw) {
         const list = Object.values(raw) as Player[];
-        // เรียง: ถูกเยอะสุด + เวลาใช้น้อยสุด
         list.sort((a, b) => b.score - a.score || a.totalTime - b.totalTime);
         setPlayers(list);
       }
@@ -49,7 +50,7 @@ export default function Leaderboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-100 p-6">
       <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-lg p-6">
-        <h1 className="text-2xl font-bold mb-4 text-center">🏆 Leaderboard</h1>
+        <h1 className="text-2xl font-bold mb-4 text-center">🏆 Final Leaderboard</h1>
 
         <table className="w-full mb-6 border-collapse">
           <thead>

@@ -1,7 +1,9 @@
+// src/pages/play.tsx
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { db } from '../firebase';
-import { ref, onValue, update, set, remove } from 'firebase/database';
+import { ref, onValue, update } from 'firebase/database';
 
 export default function PlayPage() {
   const router = useRouter();
@@ -12,6 +14,11 @@ export default function PlayPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(30);
   const [startTime, setStartTime] = useState<number>(0);
+
+  // ✅ Feedback Modal
+  const [showResult, setShowResult] = useState(false);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [answerTime, setAnswerTime] = useState<number>(0);
 
   // ✅ Listen to gameStatus
   useEffect(() => {
@@ -37,7 +44,6 @@ export default function PlayPage() {
         setStartTime(Date.now());
       } else {
         setQuestion(null);
-        // กลับรอห้องเมื่อไม่มีข้อสอบ
         router.push('/waiting-room');
       }
     });
@@ -62,7 +68,16 @@ export default function PlayPage() {
       lastAnswer: selected || 'NO_ANSWER',
       lastTime: selected ? duration : 30,
     });
-    // ❗ อย่า remove ที่ฝั่ง player → ให้ admin จัดการวนข้อถัดไป!
+
+    // ✅ Show feedback modal
+    const correctAnswer = question.answer;
+    setIsCorrect(selected === correctAnswer);
+    setAnswerTime(duration);
+    setShowResult(true);
+  };
+
+  const handleCloseResult = () => {
+    setShowResult(false);
     router.push('/waiting-room');
   };
 
@@ -104,6 +119,29 @@ export default function PlayPage() {
           ส่งคำตอบ
         </button>
       </div>
+
+      {/* ✅ Feedback Modal */}
+      {showResult && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded shadow-lg text-center max-w-sm w-full">
+            {selected === 'NO_ANSWER' ? (
+              <p className="text-red-500 mb-2">คุณไม่ได้ตอบคำถาม</p>
+            ) : isCorrect ? (
+              <p className="text-green-600 mb-2">✅ ตอบถูก!</p>
+            ) : (
+              <p className="text-red-600 mb-2">❌ ตอบผิด</p>
+            )}
+            <p className="mb-2">คำตอบของคุณ: <strong>{selected}</strong></p>
+            <p className="mb-2">เวลาที่ใช้: <strong>{answerTime} วินาที</strong></p>
+            <button
+              className="mt-4 bg-blue-600 text-white px-4 py-2 rounded"
+              onClick={handleCloseResult}
+            >
+              🔄 รอคำถามถัดไป
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

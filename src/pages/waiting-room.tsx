@@ -1,14 +1,16 @@
+// src/pages/waiting-room.tsx
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { db } from '../firebase';
-import { ref, onValue } from 'firebase/database';
+import { ref, onValue, get } from 'firebase/database';
 
 export default function WaitingRoom() {
   const router = useRouter();
   const room = 'SOC-QUIZ';
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
-  // ✅ ฟัง Game Status + Question แยก
+  // ✅ ฟัง Game Status + Question โดยตรวจสอบอย่างปลอดภัย
   useEffect(() => {
     const gsRef = ref(db, `gameStatus/${room}`);
     const qRef = ref(db, `currentQuestion/${room}`);
@@ -20,10 +22,14 @@ export default function WaitingRoom() {
       }
     });
 
-    const unsubQ = onValue(qRef, (snap) => {
+    const unsubQ = onValue(qRef, async (snap) => {
       const q = snap.val();
       if (q) {
-        router.push('/play');
+        // เช็คสถานะเกมก่อน redirect ป้องกัน loop
+        const statusSnap = await get(gsRef);
+        if (statusSnap.val() === 'playing') {
+          router.push('/play');
+        }
       }
     });
 
@@ -33,7 +39,7 @@ export default function WaitingRoom() {
     };
   }, []);
 
-  // ✅ แสดง Leaderboard ย่อ (optional)
+  // ✅ แสดง Leaderboard ย่อ (แสดง Score จริง)
   useEffect(() => {
     const pRef = ref(db, `players/${room}`);
     const unsub = onValue(pRef, (snap) => {
@@ -59,7 +65,7 @@ export default function WaitingRoom() {
             <ul className="space-y-1 text-sm">
               {leaderboard.slice(0, 5).map((p, i) => (
                 <li key={i}>
-                  {i + 1}. {p.name} - {p.score} คะแนน, {p.totalTime}s
+                  {i + 1}. {p.name} — {p.score} คะแนน, {p.totalTime}s
                 </li>
               ))}
             </ul>

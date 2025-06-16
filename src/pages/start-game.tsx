@@ -1,3 +1,5 @@
+// src/pages/start-game.tsx
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 
@@ -13,7 +15,7 @@ export default function StartGame() {
   const [roomCode, setRoomCode] = useState('');
 
   useEffect(() => {
-    const saved = localStorage.getItem('questions');
+    const saved = localStorage.getItem('quiz-questions'); // ✅ แก้ชื่อ key ให้ตรงกับ /upload
     const room = localStorage.getItem('roomCode');
     if (saved) {
       try {
@@ -36,7 +38,7 @@ export default function StartGame() {
       style={{ backgroundImage: "url('/bg-firstpage.png')" }}
     >
       <h1 className="text-2xl font-bold mb-4 bg-white bg-opacity-80 px-4 py-2 rounded">
-        🎯 เตรียมเริ่มเกม
+        🎯 เตรียมเริ่มเกม (Local Test)
       </h1>
       <p className="mb-4 bg-white bg-opacity-80 px-4 py-2 rounded">
         Room Code: <span className="font-mono">{roomCode}</span>
@@ -56,7 +58,7 @@ export default function StartGame() {
         onClick={startGame}
         disabled={questions.length === 0}
       >
-       ▶️ เริ่มเกม
+        ▶️ เริ่มเกม
       </button>
     </div>
   );

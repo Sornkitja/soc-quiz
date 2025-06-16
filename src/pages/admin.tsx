@@ -1,3 +1,5 @@
+// src/pages/admin.tsx
+
 import { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { db } from '../firebase';
@@ -11,7 +13,7 @@ export default function Admin() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // ป้องกันถ้าเกมกำลังเล่น
+    // ✅ ป้องกันถ้าเกมกำลังเล่นอยู่
     const statusSnap = await get(ref(db, `gameStatus/${room}`));
     if (statusSnap.exists() && statusSnap.val() === 'playing') {
       alert('🚫 เกมกำลังเล่นอยู่ ไม่สามารถอัปโหลดได้');
@@ -33,7 +35,7 @@ export default function Admin() {
       }));
       setQuestions(parsed);
 
-      // ล้างเก่าก่อนอัปใหม่
+      // ✅ ล้างเก่าก่อนอัปใหม่
       set(ref(db, `questions/${room}`), parsed);
       set(ref(db, `players/${room}`), null); // Reset players
       set(ref(db, `gameStatus/${room}`), 'waiting'); // Reset game status

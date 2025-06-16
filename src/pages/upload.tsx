@@ -1,4 +1,3 @@
-// เพิ่มหน้า upload.tsx
 // src/pages/upload.tsx
 
 import { useState } from 'react';
@@ -46,7 +45,7 @@ export default function UploadPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-200 to-yellow-100 p-6">
-      <h1 className="text-2xl font-bold mb-4">📤 อัปโหลดไฟล์คำถาม</h1>
+      <h1 className="text-2xl font-bold mb-4">📤 อัปโหลดไฟล์คำถาม (Local)</h1>
       <input
         type="file"
         accept=".xlsx, .xls"

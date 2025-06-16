@@ -1,3 +1,5 @@
+// src/pages/admin-start.tsx
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { db } from '../firebase';
