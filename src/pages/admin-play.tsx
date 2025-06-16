@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { ref, onValue, set } from 'firebase/database';
-import { db } from '../firebase';
 import { useRouter } from 'next/router';
+import { db } from '../firebase';
+import { ref, onValue, set } from 'firebase/database';
 
 export default function AdminPlay() {
   const router = useRouter();
@@ -9,112 +9,72 @@ export default function AdminPlay() {
 
   const [questions, setQuestions] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [currentQuestion, setCurrentQuestion] = useState<any>(null);
-  const [timeLeft, setTimeLeft] = useState(30);
-  const [showAnswer, setShowAnswer] = useState(false);
+  const [currentQ, setCurrentQ] = useState<any>(null);
 
-  // ✅ โหลด questions & currentIndex
   useEffect(() => {
     const qRef = ref(db, `questions/${room}`);
     const unsubQ = onValue(qRef, (snap) => {
-      const val = snap.val() || [];
-      setQuestions(val);
+      const allQ = snap.val();
+      if (allQ) {
+        setQuestions(allQ);
+      }
     });
 
     const indexRef = ref(db, `adminStatus/${room}/currentIndex`);
-    const unsubIdx = onValue(indexRef, (snap) => {
-      const val = snap.val() || 0;
-      setCurrentIndex(val);
+    const unsubIndex = onValue(indexRef, (snap) => {
+      const idx = snap.val();
+      if (idx !== null) {
+        setCurrentIndex(idx);
+        setCurrentQ(questions[idx]);
+      }
     });
 
     return () => {
       unsubQ();
-      unsubIdx();
+      unsubIndex();
     };
-  }, []);
+  }, [questions]);
 
-  // ✅ เมื่อกด Next หรือโหลด index ใหม่ → set ข้อสอบใหม่
-  useEffect(() => {
-    if (questions.length && currentIndex < questions.length) {
-      const q = questions[currentIndex];
-      set(ref(db, `currentQuestion/${room}`), q);
-      setCurrentQuestion(q);
-      setTimeLeft(30);
-      setShowAnswer(false);
+  const sendNext = async () => {
+    if (currentIndex >= questions.length) {
+      // End
+      await set(ref(db, `gameStatus/${room}`), 'ended');
+      router.push('/leaderboard');
+    } else {
+      // Send this question
+      await set(ref(db, `currentQuestion/${room}`), questions[currentIndex]);
     }
-  }, [questions, currentIndex]);
-
-  // ✅ Countdown 30 วินาที → หมดเวลาโชว์เฉลย
-  useEffect(() => {
-    if (!currentQuestion || showAnswer) return;
-    if (timeLeft <= 0) {
-      setShowAnswer(true);
-      return;
-    }
-    const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [timeLeft, currentQuestion, showAnswer]);
-
-  const handleNext = () => {
-    if (currentIndex + 1 >= questions.length) {
-      alert('✅ คำถามหมดแล้ว!');
-      return;
-    }
-    set(ref(db, `adminStatus/${room}/currentIndex`), currentIndex + 1);
   };
 
-  const handleEnd = () => {
-    set(ref(db, `gameStatus/${room}`), 'ended');
-    router.push('/leaderboard');
+  const handleNext = async () => {
+    await sendNext();
+    // Next index
+    await set(ref(db, `adminStatus/${room}/currentIndex`), currentIndex + 1);
   };
 
   return (
-    <div
-      className="min-h-screen bg-cover bg-center flex flex-col items-center justify-center p-6"
-      style={{ backgroundImage: "url('/bg-firstpage.png')" }}
-    >
-      <div className="bg-white bg-opacity-90 p-8 rounded shadow text-center max-w-xl w-full">
-        <h1 className="text-2xl font-bold mb-4">🗂️ ควบคุมข้อสอบ</h1>
-
-        {currentQuestion ? (
+    <div className="min-h-screen bg-red-900 text-white flex flex-col items-center justify-center p-6">
+      <div className="bg-white text-black rounded-lg p-6 max-w-md w-full shadow-lg">
+        <h1 className="text-xl font-bold mb-4">📢 Admin: ข้อ {currentIndex + 1}</h1>
+        {currentQ ? (
           <>
-            <h2 className="text-xl font-bold mb-2">ข้อ {currentIndex + 1} / {questions.length}</h2>
-            <p className="mb-4">{currentQuestion.question}</p>
-            <div className="grid gap-2 mb-4 text-left">
-              {currentQuestion.choices.map((choice: string, idx: number) => (
-                <div
-                  key={idx}
-                  className={`p-3 rounded border ${
-                    showAnswer && (idx + 1) === parseInt(currentQuestion.answer)
-                      ? 'bg-green-200 border-green-500'
-                      : 'bg-white'
-                  }`}
-                >
-                  <strong>{['A', 'B', 'C', 'D'][idx]}.</strong> {choice}
-                </div>
+            <p className="mb-4">{currentQ.question}</p>
+            <ul className="mb-4">
+              {currentQ.choices.map((c: string, i: number) => (
+                <li key={i}>
+                  {i + 1}. {c} {Number(currentQ.answer) === i + 1 && <strong>✅</strong>}
+                </li>
               ))}
-            </div>
-            {!showAnswer ? (
-              <p className="font-bold text-red-600 mb-4">⏱️ เวลาที่เหลือ: {timeLeft} วินาที</p>
-            ) : (
-              <p className="font-bold text-green-600 mb-4">✅ หมดเวลา! เฉลยแสดงแล้ว</p>
-            )}
+            </ul>
             <button
               onClick={handleNext}
-              disabled={!showAnswer || currentIndex + 1 >= questions.length}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded font-bold mb-4 w-full"
+              className="bg-blue-600 hover:bg-blue-700 text-white w-full py-3 rounded"
             >
               ⏭️ ข้อถัดไป
             </button>
-            <button
-              onClick={handleEnd}
-              className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded font-bold w-full"
-            >
-              ⏹️ จบเกม
-            </button>
           </>
         ) : (
-          <p>📌 กำลังโหลดข้อสอบ...</p>
+          <p>รอโหลดคำถาม...</p>
         )}
       </div>
     </div>

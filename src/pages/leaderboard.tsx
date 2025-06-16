@@ -4,58 +4,81 @@ import { ref, onValue } from 'firebase/database';
 
 interface Player {
   name: string;
-  correctCount: number;
+  score: number;
   totalTime: number;
+}
+
+interface Question {
+  question: string;
+  answer: string | number;
+  choices: string[];
 }
 
 export default function Leaderboard() {
   const room = 'SOC-QUIZ';
+
   const [players, setPlayers] = useState<Player[]>([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
 
   useEffect(() => {
-    const playersRef = ref(db, `players/${room}`);
-    const unsub = onValue(playersRef, (snap) => {
-      const val = snap.val() || {};
-      const arr = Object.values(val) as any[];
-      const sorted = arr
-        .map(p => ({
-          name: p.name || '',
-          correctCount: p.correctCount || 0,
-          totalTime: p.totalTime || 0
-        }))
-        .sort((a, b) => b.correctCount - a.correctCount || a.totalTime - b.totalTime)
-        .slice(0, 10);
-      setPlayers(sorted);
+    const pRef = ref(db, `players/${room}`);
+    const unsubP = onValue(pRef, (snap) => {
+      const raw = snap.val();
+      if (raw) {
+        const list = Object.values(raw) as Player[];
+        // เรียง: ถูกเยอะสุด + เวลาใช้น้อยสุด
+        list.sort((a, b) => b.score - a.score || a.totalTime - b.totalTime);
+        setPlayers(list);
+      }
     });
 
-    return () => unsub();
+    const qRef = ref(db, `questions/${room}`);
+    const unsubQ = onValue(qRef, (snap) => {
+      const raw = snap.val();
+      if (raw) {
+        setQuestions(raw);
+      }
+    });
+
+    return () => {
+      unsubP();
+      unsubQ();
+    };
   }, []);
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center p-6 bg-cover bg-center"
-      style={{ backgroundImage: "url('/bg-leaderboard.png')" }}
-    >
-      <div className="bg-white bg-opacity-90 p-6 rounded shadow max-w-md w-full text-center">
-        <h1 className="text-2xl font-bold mb-4">🏆 Leaderboard</h1>
-        <table className="w-full text-left">
+    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-100 p-6">
+      <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-lg p-6">
+        <h1 className="text-2xl font-bold mb-4 text-center">🏆 Leaderboard</h1>
+
+        <table className="w-full mb-6 border-collapse">
           <thead>
-            <tr className="border-b">
-              <th className="py-2">ชื่อ</th>
-              <th className="py-2">ถูก</th>
-              <th className="py-2">เวลา (วินาที)</th>
+            <tr className="bg-orange-500 text-white">
+              <th className="p-2 text-left">ชื่อ</th>
+              <th className="p-2 text-left">คะแนน</th>
+              <th className="p-2 text-left">เวลารวม (วินาที)</th>
             </tr>
           </thead>
           <tbody>
-            {players.map((p, i) => (
-              <tr key={i} className="border-b">
-                <td className="py-1">{p.name}</td>
-                <td className="py-1">{p.correctCount}</td>
-                <td className="py-1">{p.totalTime}</td>
+            {players.map((p, idx) => (
+              <tr key={idx} className="border-b">
+                <td className="p-2">{p.name}</td>
+                <td className="p-2">{p.score}</td>
+                <td className="p-2">{p.totalTime}</td>
               </tr>
             ))}
           </tbody>
         </table>
+
+        <h2 className="text-xl font-semibold mb-2">📚 เฉลยคำถาม</h2>
+        <ul className="space-y-3">
+          {questions.map((q, i) => (
+            <li key={i} className="bg-gray-50 p-3 rounded border">
+              <p><strong>ข้อ {i + 1}:</strong> {q.question}</p>
+              <p><strong>คำตอบ:</strong> {typeof q.answer === 'number' ? q.choices[q.answer - 1] : q.answer}</p>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
