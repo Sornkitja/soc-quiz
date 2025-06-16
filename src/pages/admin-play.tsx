@@ -16,11 +16,13 @@ export default function AdminPlay() {
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [timerRunning, setTimerRunning] = useState(false);
 
-  // ✅ โหลด questions + currentIndex จาก Firebase
+  // โหลด questions + index
   useEffect(() => {
     const unsubQ = onValue(ref(db, `questions/${room}`), (snap) => {
       if (snap.exists()) {
         setQuestions(snap.val());
+      } else {
+        setQuestions([]);
       }
     });
 
@@ -35,17 +37,19 @@ export default function AdminPlay() {
     };
   }, []);
 
-  // ✅ Sync current question
+  // Sync current question
   useEffect(() => {
     if (questions.length > 0 && currentIndex < questions.length) {
       setCurrentQ(questions[currentIndex]);
-    } else if (currentIndex >= questions.length) {
+    } else if (currentIndex >= questions.length && questions.length > 0) {
       set(ref(db, `gameStatus/${room}`), 'ended');
       router.push('/leaderboard');
+    } else {
+      setCurrentQ(null);
     }
   }, [questions, currentIndex]);
 
-  // ✅ Countdown timer for display
+  // Countdown
   useEffect(() => {
     if (!timerRunning) return;
     if (timeLeft <= 0) {
@@ -75,10 +79,14 @@ export default function AdminPlay() {
   return (
     <div className="min-h-screen bg-red-900 text-white flex flex-col items-center justify-center p-6">
       <div className="bg-white text-black rounded-lg p-6 max-w-md w-full shadow-lg text-center">
-        <h1 className="text-xl font-bold mb-4">📢 Admin: ข้อ {currentIndex + 1}</h1>
+        <h1 className="text-xl font-bold mb-4">
+          📢 Admin: ข้อ {currentIndex + 1} / {questions.length}
+        </h1>
 
         {timerRunning && (
-          <h2 className="text-lg font-bold mb-4 text-red-600">⏱️ เวลาที่เหลือ: {timeLeft} วินาที</h2>
+          <h2 className="text-lg font-bold mb-4 text-red-600">
+            ⏱️ เวลาที่เหลือ: {timeLeft} วินาที
+          </h2>
         )}
 
         {currentQ ? (
@@ -97,7 +105,7 @@ export default function AdminPlay() {
               className="bg-blue-600 hover:bg-blue-700 text-white w-full py-3 rounded mb-2"
               disabled={timerRunning}
             >
-              ▶️ ปล่อยคำถามนี้
+              ▶️ ปล่อยข้อถัดไป
             </button>
             <button
               onClick={handleNextIndex}
@@ -108,7 +116,7 @@ export default function AdminPlay() {
             </button>
           </>
         ) : (
-          <p>รอโหลดคำถาม...</p>
+          <p>📂 รอโหลดคำถาม... หรือยังไม่มีไฟล์คำถาม</p>
         )}
       </div>
     </div>
