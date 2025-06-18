@@ -1,12 +1,14 @@
 // src/pages/admin.tsx
 
 import { useState } from 'react';
+import { useRouter } from 'next/router';
 import { db } from '../firebase';
 import { ref, set } from 'firebase/database';
 import * as XLSX from 'xlsx';
 
 export default function AdminPage() {
   const room = 'SOC-QUIZ';
+  const router = useRouter();
 
   const [status, setStatus] = useState('');
 
@@ -21,7 +23,6 @@ export default function AdminPage() {
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
 
-
     const newQuestions = jsonData.slice(1).map((row: any[]) => ({
       question: row[0],
       choices: [row[1], row[2], row[3], row[4]],
@@ -32,7 +33,12 @@ export default function AdminPage() {
     await set(ref(db, `players/${room}`), null);
     await set(ref(db, `gameStatus/${room}`), 'waiting');
 
-    setStatus('✅ อัปโหลดสำเร็จ! พร้อมเริ่มเกม');
+    setStatus('✅ อัปโหลดสำเร็จ! กำลังไปหน้าเริ่มเกม...');
+
+    // ✅ Auto Redirect หลัง Upload
+    setTimeout(() => {
+      router.push('/admin-start');
+    }, 1000);
   };
 
   return (
