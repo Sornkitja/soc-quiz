@@ -1,59 +1,49 @@
 // src/pages/register.tsx
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { db } from '../firebase';
-import { ref, onValue, push, set } from 'firebase/database';
-import { v4 as uuid } from 'uuid';
+import { ref, set } from 'firebase/database';
 
-export default function Register() {
+export default function RegisterPage() {
   const router = useRouter();
   const room = 'SOC-QUIZ';
+
   const [name, setName] = useState('');
 
-  useEffect(() => {
-    const statusRef = ref(db, `gameStatus/${room}`);
-    const unsub = onValue(statusRef, (snap) => {
-      const status = snap.val();
-      if (status === 'playing') {
-        alert('🚫 เกมกำลังดำเนินอยู่ ไม่สามารถเข้าร่วมได้');
-        router.replace('/');
-      } else if (status === 'ended') {
-        alert('🚫 เกมจบแล้ว ไม่สามารถเข้าร่วมได้');
-        router.replace('/');
-      }
-    });
-    return () => unsub();
-  }, []);
-
   const handleRegister = async () => {
-    if (!name.trim()) return;
-    const playerId = uuid();
+    if (name.trim() === '') {
+      alert('กรุณากรอกชื่อก่อนเข้าสู่ห้องรอ');
+      return;
+    }
+
+    const playerId = `${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     await set(ref(db, `players/${room}/${playerId}`), {
-      name,
+      name: name.trim(),
       score: 0,
       totalTime: 0,
     });
+
     localStorage.setItem('playerId', playerId);
     localStorage.setItem('roomCode', room);
-    router.push(`/waiting-room?room=${room}`);
+
+    router.push('/waiting-room');
   };
 
   return (
-    <div className="min-h-screen bg-cover bg-center flex flex-col items-center justify-center p-6"
-      style={{ backgroundImage: "url('/bg-firstpage.png')" }}>
-      <div className="bg-white bg-opacity-90 p-6 rounded shadow-lg max-w-md w-full text-center">
-        <h1 className="text-2xl font-bold mb-4">📋 ลงทะเบียน</h1>
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-green-200 to-blue-200">
+      <div className="bg-white p-6 rounded shadow-lg max-w-sm w-full text-center">
+        <h1 className="text-2xl font-bold mb-4">📝 ลงทะเบียนเข้าสู่เกม</h1>
         <input
           type="text"
           placeholder="ชื่อของคุณ"
-          className="border p-3 rounded w-full mb-4"
+          className="w-full px-4 py-2 border rounded mb-4"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
         <button
+          className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded font-bold w-full"
           onClick={handleRegister}
-          className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded font-bold w-full"
         >
           ✅ เข้าห้องรอ
         </button>

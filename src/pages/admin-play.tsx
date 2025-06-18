@@ -62,14 +62,14 @@ export default function AdminPlay() {
     return () => clearTimeout(timer);
   }, [timeLeft, timerRunning]);
 
-  const handleNext = async () => {
+  const handleStartQuestion = async () => {
     await set(ref(db, `currentQuestion/${room}`), currentQ);
     await set(ref(db, `gameStatus/${room}`), 'playing');
     setTimeLeft(30);
     setTimerRunning(true);
   };
 
-  const handleNextIndex = async () => {
+  const handleNextQuestion = async () => {
     await set(ref(db, `adminStatus/${room}/currentIndex`), currentIndex + 1);
     await set(ref(db, `gameStatus/${room}`), 'waiting');
     await set(ref(db, `currentQuestion/${room}`), null);
@@ -95,24 +95,24 @@ export default function AdminPlay() {
             <ul className="mb-4 text-left">
               {currentQ.choices.map((c: string, i: number) => (
                 <li key={i} className="mb-1">
-                  {['A', 'B', 'C', 'D'][i]}. {c}{' '}
-                  {Number(currentQ.answer) === i + 1 && <strong>✅</strong>}
+                  {['A', 'B', 'C', 'D'][i]}. {c}
+                  {/* ✅ ไม่โชว์คำตอบที่ถูก */}
                 </li>
               ))}
             </ul>
             <button
-              onClick={handleNext}
+              onClick={handleStartQuestion}
               className="bg-blue-600 hover:bg-blue-700 text-white w-full py-3 rounded mb-2"
               disabled={timerRunning}
             >
-              ▶️ ปล่อยข้อถัดไป
+              ▶️ ปล่อยคำถามนี้
             </button>
             <button
-              onClick={handleNextIndex}
+              onClick={handleNextQuestion}
               className="bg-green-600 hover:bg-green-700 text-white w-full py-3 rounded"
               disabled={!timerRunning}
             >
-              ⏭️ ไปข้อถัดไป
+              ⏭️ ไปเตรียมคำถามถัดไป
             </button>
           </>
         ) : (

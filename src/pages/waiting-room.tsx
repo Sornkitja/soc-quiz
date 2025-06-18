@@ -7,9 +7,16 @@ import { ref, onValue, get } from 'firebase/database';
 
 export default function WaitingRoom() {
   const router = useRouter();
-  const room = 'SOC-QUIZ'; // ✅ Fixed room code
+  const room = 'SOC-QUIZ';
 
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [playerId, setPlayerId] = useState('');
+  const [lastQuestionId, setLastQuestionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const p = localStorage.getItem('playerId') || '';
+    setPlayerId(p);
+  }, []);
 
   // ✅ Listen gameStatus + currentQuestion safely
   useEffect(() => {
@@ -25,8 +32,9 @@ export default function WaitingRoom() {
 
     const unsubQ = onValue(qRef, async (snap) => {
       const q = snap.val();
-      if (q) {
-        // ป้องกัน loop: เช็คสถานะก่อน
+      if (q && q.question !== lastQuestionId) {
+        // 🟢 ใหม่จริง → ไปเล่น
+        setLastQuestionId(q.question);
         const statusSnap = await get(gsRef);
         if (statusSnap.val() === 'playing') {
           router.push('/play');
@@ -38,7 +46,7 @@ export default function WaitingRoom() {
       unsubGS();
       unsubQ();
     };
-  }, [room]);
+  }, [room, lastQuestionId]);
 
   // ✅ Load Leaderboard realtime
   useEffect(() => {
@@ -60,7 +68,7 @@ export default function WaitingRoom() {
       style={{ backgroundImage: "url('/bg-waiting.png')" }}
     >
       <div className="bg-white p-6 rounded shadow-lg max-w-md w-full text-center">
-        <h1 className="text-2xl font-bold mb-2">⏳ คุณอยู่ในห้องรอแล้ว</h1>
+        <h1 className="text-2xl font-bold mb-2">⏳ คุณอยู่ในห้องรอ</h1>
 
         {leaderboard.length > 0 && (
           <div className="text-left mt-4">
@@ -76,7 +84,7 @@ export default function WaitingRoom() {
         )}
 
         <p className="mt-4 text-gray-500 text-sm">
-          โปรดรอผู้ดูแลเริ่มคำถาม...
+          โปรดรอผู้ดูแลเริ่มคำถามถัดไป...
         </p>
       </div>
     </div>

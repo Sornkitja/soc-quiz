@@ -7,11 +7,9 @@ import { ref, onValue, update } from 'firebase/database';
 
 export default function PlayPage() {
   const router = useRouter();
-  const room = 'SOC-QUIZ'; // ✅ ใช้ Fixed room code
+  const room = 'SOC-QUIZ';
 
-  // ✅ ใช้ useState + useEffect สำหรับ playerId
   const [playerId, setPlayerId] = useState('');
-
   const [question, setQuestion] = useState<any>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(30);
@@ -19,16 +17,14 @@ export default function PlayPage() {
 
   // ✅ Feedback Modal
   const [showResult, setShowResult] = useState(false);
-  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [answerTime, setAnswerTime] = useState<number>(0);
 
-  // ✅ ดึง playerId จาก localStorage ฝั่ง Client เท่านั้น
   useEffect(() => {
     const p = localStorage.getItem('playerId') || '';
     setPlayerId(p);
   }, []);
 
-  // ✅ Listen to gameStatus
+  // Listen to gameStatus
   useEffect(() => {
     const gsRef = ref(db, `gameStatus/${room}`);
     const unsubGS = onValue(gsRef, (snap) => {
@@ -40,7 +36,7 @@ export default function PlayPage() {
     return () => unsubGS();
   }, [room]);
 
-  // ✅ Listen to currentQuestion
+  // Listen to currentQuestion
   useEffect(() => {
     const qRef = ref(db, `currentQuestion/${room}`);
     const unsubQ = onValue(qRef, (snap) => {
@@ -58,7 +54,7 @@ export default function PlayPage() {
     return () => unsubQ();
   }, [room]);
 
-  // ✅ Countdown
+  // Countdown
   useEffect(() => {
     if (!question) return;
     if (timeLeft <= 0) {
@@ -77,9 +73,7 @@ export default function PlayPage() {
       lastTime: selected ? duration : 30,
     });
 
-    // ✅ Show feedback modal
-    const correctAnswer = question.answer;
-    setIsCorrect(selected === correctAnswer);
+    // ✅ Feedback ใหม่ — ไม่มีถูก/ผิด
     setAnswerTime(duration);
     setShowResult(true);
   };
@@ -132,20 +126,13 @@ export default function PlayPage() {
       {showResult && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded shadow-lg text-center max-w-sm w-full">
-            {selected === 'NO_ANSWER' ? (
-              <p className="text-red-500 mb-2">คุณไม่ได้ตอบคำถาม</p>
-            ) : isCorrect ? (
-              <p className="text-green-600 mb-2">✅ ตอบถูก!</p>
-            ) : (
-              <p className="text-red-600 mb-2">❌ ตอบผิด</p>
-            )}
-            <p className="mb-2">คำตอบของคุณ: <strong>{selected}</strong></p>
+            <p className="text-green-700 mb-2">✅ ส่งคำตอบแล้ว</p>
             <p className="mb-2">เวลาที่ใช้: <strong>{answerTime} วินาที</strong></p>
             <button
               className="mt-4 bg-blue-600 text-white px-4 py-2 rounded"
               onClick={handleCloseResult}
             >
-              🔄 รอคำถามถัดไป
+              🔄 กลับไปห้องรอ
             </button>
           </div>
         </div>

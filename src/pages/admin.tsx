@@ -1,56 +1,51 @@
 // src/pages/admin.tsx
 
 import { useState } from 'react';
-import * as XLSX from 'xlsx';
 import { db } from '../firebase';
-import { ref, set, get } from 'firebase/database';
+import { ref, set } from 'firebase/database';
+import * as XLSX from 'xlsx';
 
-export default function Admin() {
-  const [questions, setQuestions] = useState<any[]>([]);
-  const [room] = useState('SOC-QUIZ');
+export default function AdminPage() {
+  const room = 'SOC-QUIZ';
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const [status, setStatus] = useState('');
+
+  const handleUpload = async (e: any) => {
+    const file = e.target.files[0];
     if (!file) return;
 
-    // ✅ ป้องกันถ้าเกมกำลังเล่นอยู่
-    const statusSnap = await get(ref(db, `gameStatus/${room}`));
-    if (statusSnap.exists() && statusSnap.val() === 'playing') {
-      alert('🚫 เกมกำลังเล่นอยู่ ไม่สามารถอัปโหลดได้');
-      return;
-    }
+    setStatus('⏳ กำลังอ่านไฟล์...');
 
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const bstr = evt.target?.result;
-      const wb = XLSX.read(bstr, { type: 'binary' });
-      const wsname = wb.SheetNames[0];
-      const ws = wb.Sheets[wsname];
-      const data = XLSX.utils.sheet_to_json(ws, { header: 1 }) as string[][];
+    const data = await file.arrayBuffer();
+    const workbook = XLSX.read(data);
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
 
-      const parsed = data.slice(1).map((row) => ({
-        question: row[0],
-        choices: [row[1], row[2], row[3], row[4]],
-        answer: row[5],
-      }));
-      setQuestions(parsed);
 
-      // ✅ ล้างเก่าก่อนอัปใหม่
-      set(ref(db, `questions/${room}`), parsed);
-      set(ref(db, `players/${room}`), null); // Reset players
-      set(ref(db, `gameStatus/${room}`), 'waiting'); // Reset game status
+    const newQuestions = jsonData.slice(1).map((row: any[]) => ({
+      question: row[0],
+      choices: [row[1], row[2], row[3], row[4]],
+      answer: row[5],
+    }));
 
-      alert('✅ อัปโหลดสำเร็จ!');
-    };
-    reader.readAsBinaryString(file);
+    await set(ref(db, `questions/${room}`), newQuestions);
+    await set(ref(db, `players/${room}`), null);
+    await set(ref(db, `gameStatus/${room}`), 'waiting');
+
+    setStatus('✅ อัปโหลดสำเร็จ! พร้อมเริ่มเกม');
   };
 
   return (
-    <div className="min-h-screen bg-red-900 text-white flex flex-col items-center justify-center p-6">
-      <div className="bg-white text-black rounded-lg p-6 max-w-md w-full shadow-lg">
-        <h1 className="text-2xl font-bold mb-4">🎮 Admin Panel</h1>
-        <input type="file" accept=".xlsx, .xls" onChange={handleFileUpload} className="mb-4" />
-        <p>✅ เมื่ออัปโหลดแล้วให้กด "เริ่มเกม" ในหน้าถัดไป</p>
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-purple-200 to-pink-200">
+      <div className="bg-white p-6 rounded shadow-lg max-w-md w-full text-center">
+        <h1 className="text-2xl font-bold mb-4">📂 อัปโหลดไฟล์คำถาม</h1>
+        <input
+          type="file"
+          accept=".xlsx"
+          onChange={handleUpload}
+          className="mb-4"
+        />
+        {status && <p className="text-green-600 font-semibold">{status}</p>}
       </div>
     </div>
   );
