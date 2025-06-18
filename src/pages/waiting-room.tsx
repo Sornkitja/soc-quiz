@@ -7,10 +7,11 @@ import { ref, onValue, get } from 'firebase/database';
 
 export default function WaitingRoom() {
   const router = useRouter();
-  const room = 'SOC-QUIZ';
+  const room = 'SOC-QUIZ'; // ✅ Fixed room code
+
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
-  // ✅ ฟัง Game Status + Question โดยตรวจสอบอย่างปลอดภัย
+  // ✅ Listen gameStatus + currentQuestion safely
   useEffect(() => {
     const gsRef = ref(db, `gameStatus/${room}`);
     const qRef = ref(db, `currentQuestion/${room}`);
@@ -25,7 +26,7 @@ export default function WaitingRoom() {
     const unsubQ = onValue(qRef, async (snap) => {
       const q = snap.val();
       if (q) {
-        // เช็คสถานะเกมก่อน redirect ป้องกัน loop
+        // ป้องกัน loop: เช็คสถานะก่อน
         const statusSnap = await get(gsRef);
         if (statusSnap.val() === 'playing') {
           router.push('/play');
@@ -37,9 +38,9 @@ export default function WaitingRoom() {
       unsubGS();
       unsubQ();
     };
-  }, []);
+  }, [room]);
 
-  // ✅ แสดง Leaderboard ย่อ (แสดง Score จริง)
+  // ✅ Load Leaderboard realtime
   useEffect(() => {
     const pRef = ref(db, `players/${room}`);
     const unsub = onValue(pRef, (snap) => {
@@ -51,11 +52,13 @@ export default function WaitingRoom() {
       }
     });
     return () => unsub();
-  }, []);
+  }, [room]);
 
   return (
-    <div className="min-h-screen bg-cover bg-center flex flex-col items-center justify-center p-6"
-      style={{ backgroundImage: "url('/bg-waiting.png')" }}>
+    <div
+      className="min-h-screen bg-cover bg-center flex flex-col items-center justify-center p-6"
+      style={{ backgroundImage: "url('/bg-waiting.png')" }}
+    >
       <div className="bg-white p-6 rounded shadow-lg max-w-md w-full text-center">
         <h1 className="text-2xl font-bold mb-2">⏳ คุณอยู่ในห้องรอแล้ว</h1>
 

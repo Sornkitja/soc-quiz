@@ -7,8 +7,10 @@ import { ref, onValue, update } from 'firebase/database';
 
 export default function PlayPage() {
   const router = useRouter();
-  const room = localStorage.getItem('roomCode') || 'SOC-QUIZ';
-  const playerId = localStorage.getItem('playerId') || '';
+  const room = 'SOC-QUIZ'; // ✅ ใช้ Fixed room code
+
+  // ✅ ใช้ useState + useEffect สำหรับ playerId
+  const [playerId, setPlayerId] = useState('');
 
   const [question, setQuestion] = useState<any>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -19,6 +21,12 @@ export default function PlayPage() {
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [answerTime, setAnswerTime] = useState<number>(0);
+
+  // ✅ ดึง playerId จาก localStorage ฝั่ง Client เท่านั้น
+  useEffect(() => {
+    const p = localStorage.getItem('playerId') || '';
+    setPlayerId(p);
+  }, []);
 
   // ✅ Listen to gameStatus
   useEffect(() => {
