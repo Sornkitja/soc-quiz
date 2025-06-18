@@ -1,4 +1,4 @@
-// src/pages/waiting-room.tsx
+// Robust Version: รอฝั่ง Server Flag
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
@@ -11,17 +11,17 @@ export default function WaitingRoom() {
 
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [playerId, setPlayerId] = useState('');
-  const [lastQuestionId, setLastQuestionId] = useState<string | null>(null);
+  const [lastQuestionIndex, setLastQuestionIndex] = useState<number>(-1);
 
   useEffect(() => {
     const p = localStorage.getItem('playerId') || '';
     setPlayerId(p);
   }, []);
 
-  // ✅ Listen gameStatus + currentQuestion safely
   useEffect(() => {
     const gsRef = ref(db, `gameStatus/${room}`);
     const qRef = ref(db, `currentQuestion/${room}`);
+    const playerRef = ref(db, `players/${room}/${playerId}`);
 
     const unsubGS = onValue(gsRef, (snap) => {
       const status = snap.val();
@@ -32,11 +32,14 @@ export default function WaitingRoom() {
 
     const unsubQ = onValue(qRef, async (snap) => {
       const q = snap.val();
-      if (q && q.question !== lastQuestionId) {
-        // 🟢 ใหม่จริง → ไปเล่น
-        setLastQuestionId(q.question);
-        const statusSnap = await get(gsRef);
-        if (statusSnap.val() === 'playing') {
+      if (q) {
+        const questionIndex = q.index ?? 0;
+        setLastQuestionIndex(questionIndex);
+
+        const playerSnap = await get(playerRef);
+        const player = playerSnap.val();
+
+        if (!player || player.answeredQuestionId !== questionIndex) {
           router.push('/play');
         }
       }
@@ -46,9 +49,8 @@ export default function WaitingRoom() {
       unsubGS();
       unsubQ();
     };
-  }, [room, lastQuestionId]);
+  }, [room, playerId]);
 
-  // ✅ Load Leaderboard realtime
   useEffect(() => {
     const pRef = ref(db, `players/${room}`);
     const unsub = onValue(pRef, (snap) => {

@@ -1,5 +1,3 @@
-// src/pages/play.tsx
-
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { db } from '../firebase';
@@ -11,11 +9,11 @@ export default function PlayPage() {
 
   const [playerId, setPlayerId] = useState('');
   const [question, setQuestion] = useState<any>(null);
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(30);
   const [startTime, setStartTime] = useState<number>(0);
 
-  // ✅ Feedback Modal
   const [showResult, setShowResult] = useState(false);
   const [answerTime, setAnswerTime] = useState<number>(0);
 
@@ -24,7 +22,6 @@ export default function PlayPage() {
     setPlayerId(p);
   }, []);
 
-  // Listen to gameStatus
   useEffect(() => {
     const gsRef = ref(db, `gameStatus/${room}`);
     const unsubGS = onValue(gsRef, (snap) => {
@@ -36,13 +33,13 @@ export default function PlayPage() {
     return () => unsubGS();
   }, [room]);
 
-  // Listen to currentQuestion
   useEffect(() => {
     const qRef = ref(db, `currentQuestion/${room}`);
     const unsubQ = onValue(qRef, (snap) => {
       const q = snap.val();
       if (q) {
         setQuestion(q);
+        setCurrentIndex(q.index ?? 0);
         setSelected(null);
         setTimeLeft(30);
         setStartTime(Date.now());
@@ -54,7 +51,6 @@ export default function PlayPage() {
     return () => unsubQ();
   }, [room]);
 
-  // Countdown
   useEffect(() => {
     if (!question) return;
     if (timeLeft <= 0) {
@@ -67,13 +63,14 @@ export default function PlayPage() {
 
   const handleSubmit = async () => {
     if (!question) return;
-    const duration = Math.floor((Date.now() - startTime) / 1000);
+    const duration = Math.min(Math.floor((Date.now() - startTime) / 1000), 30);
+
     await update(ref(db, `players/${room}/${playerId}`), {
       lastAnswer: selected || 'NO_ANSWER',
       lastTime: selected ? duration : 30,
+      answeredQuestionId: currentIndex,
     });
 
-    // ✅ Feedback ใหม่ — ไม่มีถูก/ผิด
     setAnswerTime(duration);
     setShowResult(true);
   };
@@ -122,7 +119,6 @@ export default function PlayPage() {
         </button>
       </div>
 
-      {/* ✅ Feedback Modal */}
       {showResult && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded shadow-lg text-center max-w-sm w-full">
