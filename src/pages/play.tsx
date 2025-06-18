@@ -1,3 +1,5 @@
+// src/pages/play.tsx
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { db } from '../firebase';
@@ -13,9 +15,6 @@ export default function PlayPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(30);
   const [startTime, setStartTime] = useState<number>(0);
-
-  const [showResult, setShowResult] = useState(false);
-  const [answerTime, setAnswerTime] = useState<number>(0);
 
   useEffect(() => {
     const p = localStorage.getItem('playerId') || '';
@@ -64,19 +63,29 @@ export default function PlayPage() {
   const handleSubmit = async () => {
     if (!question) return;
     const duration = Math.min(Math.floor((Date.now() - startTime) / 1000), 30);
+    const isCorrect = selected === question.choices[Number(question.answer) - 1];
 
     await update(ref(db, `players/${room}/${playerId}`), {
       lastAnswer: selected || 'NO_ANSWER',
       lastTime: selected ? duration : 30,
       answeredQuestionId: currentIndex,
+      scoreIncrement: isCorrect ? 1 : 0,
     });
 
-    setAnswerTime(duration);
-    setShowResult(true);
-  };
+    // ใช้ Firebase Trigger หรือ update score ที่นี่:
+    const playerRef = ref(db, `players/${room}/${playerId}`);
+    onValue(playerRef, (snap) => {
+      if (snap.exists()) {
+        const player = snap.val();
+        const newScore = (player.score || 0) + (isCorrect ? 1 : 0);
+        const newTotalTime = (player.totalTime || 0) + duration;
+        update(playerRef, {
+          score: newScore,
+          totalTime: newTotalTime,
+        });
+      }
+    }, { onlyOnce: true });
 
-  const handleCloseResult = () => {
-    setShowResult(false);
     router.push('/waiting-room');
   };
 
@@ -118,21 +127,6 @@ export default function PlayPage() {
           ส่งคำตอบ
         </button>
       </div>
-
-      {showResult && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded shadow-lg text-center max-w-sm w-full">
-            <p className="text-green-700 mb-2">✅ ส่งคำตอบแล้ว</p>
-            <p className="mb-2">เวลาที่ใช้: <strong>{answerTime} วินาที</strong></p>
-            <button
-              className="mt-4 bg-blue-600 text-white px-4 py-2 rounded"
-              onClick={handleCloseResult}
-            >
-              🔄 กลับไปห้องรอ
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

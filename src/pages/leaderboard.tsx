@@ -43,20 +43,31 @@ export default function LeaderboardPage() {
         </ol>
 
         <h2 className="text-xl font-bold mb-3">📜 เฉลยคำถาม</h2>
-        <ol className="list-decimal list-inside space-y-2">
+        <div className="space-y-4">
           {questions.map((q, i) => (
-            <li key={i}>
-              <p className="font-semibold">{q.question}</p>
-              <ul className="list-disc list-inside ml-6">
+            <div key={i} className="pb-2 border-b border-gray-300">
+              <hr className="mb-2 border-t border-gray-400" />
+              <p className="font-semibold mb-2">
+                {i + 1}. {q.question}
+              </p>
+              <ul className="list-disc list-inside ml-6 space-y-1">
                 {q.choices.map((c: string, idx: number) => (
-                  <li key={idx} className={Number(q.answer) === idx + 1 ? 'text-green-600 font-bold' : ''}>
+                  <li
+                    key={idx}
+                    className={
+                      Number(q.answer) === idx + 1
+                        ? 'text-green-600 font-bold'
+                        : ''
+                    }
+                  >
                     {['A', 'B', 'C', 'D'][idx]}. {c}
                   </li>
                 ))}
               </ul>
-            </li>
+              <hr className="mt-2 border-t border-gray-400" />
+            </div>
           ))}
-        </ol>
+        </div>
       </div>
     </div>
   );
