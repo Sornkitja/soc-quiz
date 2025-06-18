@@ -16,7 +16,6 @@ export default function AdminPlay() {
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [timerRunning, setTimerRunning] = useState(false);
 
-  // โหลด questions + index
   useEffect(() => {
     const unsubQ = onValue(ref(db, `questions/${room}`), (snap) => {
       if (snap.exists()) {
@@ -37,10 +36,9 @@ export default function AdminPlay() {
     };
   }, []);
 
-  // Sync current question
   useEffect(() => {
     if (questions.length > 0 && currentIndex < questions.length) {
-      setCurrentQ(questions[currentIndex]);
+      setCurrentQ({ ...questions[currentIndex], index: currentIndex });
     } else if (currentIndex >= questions.length && questions.length > 0) {
       set(ref(db, `gameStatus/${room}`), 'ended');
       router.push('/leaderboard');
@@ -49,7 +47,6 @@ export default function AdminPlay() {
     }
   }, [questions, currentIndex]);
 
-  // Countdown
   useEffect(() => {
     if (!timerRunning) return;
     if (timeLeft <= 0) {
@@ -96,7 +93,6 @@ export default function AdminPlay() {
               {currentQ.choices.map((c: string, i: number) => (
                 <li key={i} className="mb-1">
                   {['A', 'B', 'C', 'D'][i]}. {c}
-                  {/* ✅ ไม่โชว์คำตอบที่ถูก */}
                 </li>
               ))}
             </ul>
@@ -110,7 +106,8 @@ export default function AdminPlay() {
             <button
               onClick={handleNextQuestion}
               className="bg-green-600 hover:bg-green-700 text-white w-full py-3 rounded"
-              disabled={!timerRunning}
+              // ✅ Robust: ปุ่มนี้กดได้แม้ timer หมดแล้ว
+              disabled={timerRunning && timeLeft > 0}
             >
               ⏭️ ไปเตรียมคำถามถัดไป
             </button>
