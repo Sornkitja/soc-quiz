@@ -29,14 +29,16 @@ export default function AdminPage() {
       answer: row[5],
     }));
 
-	await set(ref(db, `questions/${room}`), newQuestions);
-	await set(ref(db, `players/${room}`), null);
-	await set(ref(db, `gameStatus/${room}`), 'waiting');
+    await set(ref(db, `questions/${room}`), newQuestions);
+    await set(ref(db, `players/${room}`), null);
+    await set(ref(db, `gameStatus/${room}`), 'waiting');
 
-	setStatus('✅ อัปโหลดสำเร็จ! กำลังไปหน้าเริ่มเกม...');
+    setStatus('✅ อัปโหลดสำเร็จ! กำลังไปหน้าเริ่มเกม...');
 
-	// ✅ ใช้ router.push แบบ Sync ทันที
-	router.push('/admin-start');
+    // ✅ ใช้ router.push ทันที
+    router.push('/admin-start');
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-purple-200 to-pink-200">
       <div className="bg-white p-6 rounded shadow-lg max-w-md w-full text-center">
