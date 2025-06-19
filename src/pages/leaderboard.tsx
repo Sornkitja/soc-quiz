@@ -14,9 +14,17 @@ export default function LeaderboardPage() {
       const raw = snap.val();
       if (raw) {
         const list = Object.entries(raw).map(([id, data]) => ({
-          id,
-          ...data,
-        }));
+  id,
+  score: typeof data === 'object' && data !== null && (data as Record<string, any>).score !== undefined
+    ? (data as Record<string, any>).score
+    : 0,
+  totalTime: typeof data === 'object' && data !== null && (data as Record<string, any>).totalTime !== undefined
+    ? (data as Record<string, any>).totalTime
+    : 0,
+  ...(typeof data === 'object' && data !== null ? data : {}),
+}));
+
+
         list.sort((a, b) => b.score - a.score || a.totalTime - b.totalTime);
         setPlayers(list);
 
