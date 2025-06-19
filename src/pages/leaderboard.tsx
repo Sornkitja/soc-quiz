@@ -1,5 +1,3 @@
-// src/pages/leaderboard.tsx
-
 import { useEffect, useState } from 'react';
 import { db } from '../firebase';
 import { ref, onValue, get } from 'firebase/database';
@@ -15,13 +13,20 @@ export default function LeaderboardPage() {
     const unsubP = onValue(pRef, (snap) => {
       const raw = snap.val();
       if (raw) {
-        const list = Object.values(raw) as any[];
+        const list = Object.entries(raw).map(([id, data]) => ({
+          id,
+          ...data,
+        }));
         list.sort((a, b) => b.score - a.score || a.totalTime - b.totalTime);
         setPlayers(list);
 
         const id = localStorage.getItem('playerId') || '';
-        const me = list.find(p => p.id === id);
-        setMyPlayer(me || null);
+        const me = raw[id];
+        if (me) {
+          setMyPlayer({ id, ...me });
+        } else {
+          setMyPlayer(null);
+        }
       }
     });
 
@@ -40,7 +45,7 @@ export default function LeaderboardPage() {
 
         {myPlayer && (
           <div className="mb-4 p-4 bg-green-100 border border-green-300 rounded text-green-800 text-center">
-            ✅ คุณตอบถูกทั้งหมด <strong>{myPlayer.score}</strong> ข้อ  
+            ✅ คุณตอบถูกทั้งหมด <strong>{myPlayer.score}</strong> ข้อ
             ⏱️ ใช้เวลา <strong>{myPlayer.totalTime}</strong> วินาที
           </div>
         )}
@@ -48,7 +53,7 @@ export default function LeaderboardPage() {
         <h1 className="text-2xl font-bold mb-4">🏆 สรุปผลคะแนน</h1>
 
         <ol className="list-decimal list-inside mb-6">
-          {players.map((p, i) => (
+          {players.slice(0, 10).map((p, i) => (
             <li key={i} className="mb-1">
               {p.name} — {p.score} คะแนน, เวลา {p.totalTime}s
             </li>

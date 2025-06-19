@@ -1,5 +1,3 @@
-// Robust Version: รอฝั่ง Server Flag
-
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { db } from '../firebase';
@@ -11,7 +9,6 @@ export default function WaitingRoom() {
 
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [playerId, setPlayerId] = useState('');
-  const [lastQuestionIndex, setLastQuestionIndex] = useState<number>(-1);
 
   useEffect(() => {
     const p = localStorage.getItem('playerId') || '';
@@ -33,13 +30,10 @@ export default function WaitingRoom() {
     const unsubQ = onValue(qRef, async (snap) => {
       const q = snap.val();
       if (q) {
-        const questionIndex = q.index ?? 0;
-        setLastQuestionIndex(questionIndex);
-
         const playerSnap = await get(playerRef);
         const player = playerSnap.val();
 
-        if (!player || player.answeredQuestionId !== questionIndex) {
+        if (!player || player.answeredQuestionId !== q.index) {
           router.push('/play');
         }
       }
@@ -58,7 +52,7 @@ export default function WaitingRoom() {
       if (raw) {
         const list = Object.values(raw) as any[];
         list.sort((a, b) => b.score - a.score || a.totalTime - b.totalTime);
-        setLeaderboard(list);
+        setLeaderboard(list.slice(0, 10));
       }
     });
     return () => unsub();
@@ -74,9 +68,9 @@ export default function WaitingRoom() {
 
         {leaderboard.length > 0 && (
           <div className="text-left mt-4">
-            <h2 className="font-semibold mb-2">📊 อันดับปัจจุบัน</h2>
+            <h2 className="font-semibold mb-2">📊 อันดับปัจจุบัน (Top 10)</h2>
             <ul className="space-y-1 text-sm">
-              {leaderboard.slice(0, 5).map((p, i) => (
+              {leaderboard.map((p, i) => (
                 <li key={i}>
                   {i + 1}. {p.name} — {p.score} คะแนน, {p.totalTime}s
                 </li>
