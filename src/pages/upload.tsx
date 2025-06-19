@@ -1,12 +1,24 @@
 // src/pages/upload.tsx
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { db } from '../firebase';
 import { ref, set } from 'firebase/database';
 import * as XLSX from 'xlsx';
 
 export default function UploadPage() {
   const room = 'SOC-QUIZ';
+  const router = useRouter();
+
+  // ✅ Block Auth
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const auth = localStorage.getItem('adminAuth');
+      if (auth !== 'true') {
+        router.push('/admin-login');
+      }
+    }
+  }, []);
 
   const [status, setStatus] = useState('');
 
@@ -21,7 +33,6 @@ export default function UploadPage() {
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
 
-
     const newQuestions = jsonData.slice(1).map((row: any[]) => ({
       question: row[0],
       choices: [row[1], row[2], row[3], row[4]],
@@ -32,13 +43,13 @@ export default function UploadPage() {
     await set(ref(db, `players/${room}`), null);
     await set(ref(db, `gameStatus/${room}`), 'waiting');
 
-    setStatus('✅ อัปโหลดสำเร็จ! พร้อมเริ่มเกม');
+    setStatus('✅ อัปโหลดสำเร็จ!');
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-pink-200 to-yellow-100">
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-purple-200 to-pink-200">
       <div className="bg-white p-6 rounded shadow-lg max-w-md w-full text-center">
-        <h1 className="text-2xl font-bold mb-4">📁 Upload คำถาม (Backup)</h1>
+        <h1 className="text-2xl font-bold mb-4">📁 อัปโหลดคำถาม</h1>
         <input
           type="file"
           accept=".xlsx"

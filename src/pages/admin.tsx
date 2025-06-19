@@ -1,6 +1,6 @@
 // src/pages/admin.tsx
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { db } from '../firebase';
 import { ref, set } from 'firebase/database';
@@ -9,6 +9,16 @@ import * as XLSX from 'xlsx';
 export default function AdminPage() {
   const room = 'SOC-QUIZ';
   const router = useRouter();
+
+  // ✅ Block Auth
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const auth = localStorage.getItem('adminAuth');
+      if (auth !== 'true') {
+        router.push('/admin-login');
+      }
+    }
+  }, []);
 
   const [status, setStatus] = useState('');
 
@@ -34,8 +44,6 @@ export default function AdminPage() {
     await set(ref(db, `gameStatus/${room}`), 'waiting');
 
     setStatus('✅ อัปโหลดสำเร็จ! กำลังไปหน้าเริ่มเกม...');
-
-    // ✅ ใช้ router.push ทันที
     router.push('/admin-start');
   };
 

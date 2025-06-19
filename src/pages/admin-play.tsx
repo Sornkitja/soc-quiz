@@ -6,8 +6,18 @@ import { db } from '../firebase';
 import { ref, onValue, set } from 'firebase/database';
 
 export default function AdminPlay() {
-  const router = useRouter();
   const room = 'SOC-QUIZ';
+  const router = useRouter();
+
+  // ✅ Block Auth
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const auth = localStorage.getItem('adminAuth');
+      if (auth !== 'true') {
+        router.push('/admin-login');
+      }
+    }
+  }, []);
 
   const [questions, setQuestions] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -106,7 +116,6 @@ export default function AdminPlay() {
             <button
               onClick={handleNextQuestion}
               className="bg-green-600 hover:bg-green-700 text-white w-full py-3 rounded"
-              // ✅ Robust: ปุ่มนี้กดได้แม้ timer หมดแล้ว
               disabled={timerRunning && timeLeft > 0}
             >
               ⏭️ ไปเตรียมคำถามถัดไป

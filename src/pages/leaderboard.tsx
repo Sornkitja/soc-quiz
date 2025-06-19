@@ -8,6 +8,7 @@ export default function LeaderboardPage() {
   const room = 'SOC-QUIZ';
   const [players, setPlayers] = useState<any[]>([]);
   const [questions, setQuestions] = useState<any[]>([]);
+  const [myPlayer, setMyPlayer] = useState<any>(null);
 
   useEffect(() => {
     const pRef = ref(db, `players/${room}`);
@@ -17,6 +18,10 @@ export default function LeaderboardPage() {
         const list = Object.values(raw) as any[];
         list.sort((a, b) => b.score - a.score || a.totalTime - b.totalTime);
         setPlayers(list);
+
+        const id = localStorage.getItem('playerId') || '';
+        const me = list.find(p => p.id === id);
+        setMyPlayer(me || null);
       }
     });
 
@@ -32,6 +37,14 @@ export default function LeaderboardPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-100 to-orange-200 p-6 flex flex-col items-center">
       <div className="bg-white p-6 rounded-lg shadow-lg max-w-2xl w-full">
+
+        {myPlayer && (
+          <div className="mb-4 p-4 bg-green-100 border border-green-300 rounded text-green-800 text-center">
+            ✅ คุณตอบถูกทั้งหมด <strong>{myPlayer.score}</strong> ข้อ  
+            ⏱️ ใช้เวลา <strong>{myPlayer.totalTime}</strong> วินาที
+          </div>
+        )}
+
         <h1 className="text-2xl font-bold mb-4">🏆 สรุปผลคะแนน</h1>
 
         <ol className="list-decimal list-inside mb-6">
